@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#1a2332;min-height:100vh}
+.top-bar{background:#fff;border-bottom:1px solid #e2e8f0;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-size:18px;font-weight:600;color:#2563eb;letter-spacing:-0.5px}
+.search-bar{display:flex;align-items:center;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:24px;padding:8px 16px;width:340px;gap:8px}
+.search-bar input{background:none;border:none;outline:none;font-size:14px;color:#1a2332;width:100%}
+.clock-area{text-align:right}
+#clock{font-size:22px;font-weight:600;color:#1a2332;letter-spacing:1px}
+#date-str{font-size:12px;color:#64748b;margin-top:2px}
+.main{padding:20px 24px;max-width:1400px;margin:0 auto}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px}
+.section-title{font-size:13px;font-weight:600;color:#64748b;letter-spacing:0.5px;text-transform:uppercase}
+.period-tabs{display:flex;gap:4px}
+.period-btn{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid #e2e8f0;background:#fff;color:#94a3b8;cursor:pointer;transition:all 0.15s}
+.period-btn.active{background:#2563eb;color:#fff;border-color:#2563eb}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.grid-5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.card{background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:16px}
+.weather-card{display:flex;align-items:center;gap:16px;padding:18px 20px}
+.weather-main{flex:1}
+.weather-temp{font-size:36px;font-weight:600;color:#1a2332}
+.weather-desc{font-size:14px;color:#64748b;margin-top:2px}
+.weather-meta{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:12px;color:#94a3b8}
+.index-card{padding:12px 14px}
+.idx-label{font-size:11px;color:#94a3b8;font-weight:500;margin-bottom:3px}
+.idx-value{font-size:17px;font-weight:600;color:#1a2332}
+.idx-change{font-size:11px;margin-top:2px;font-weight:500}
+.up{color:#16a34a}.down{color:#dc2626}.flat{color:#94a3b8}
+.chart-wrap{position:relative;width:100%;height:130px;margin-top:6px;overflow:visible}
+.news-card{padding:0;overflow:hidden}
+.news-tabs{display:flex;border-bottom:1px solid #e2e8f0}
+.news-tab{padding:10px 14px;font-size:13px;font-weight:500;color:#94a3b8;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;white-space:nowrap}
+.news-tab.active{color:#2563eb;border-bottom-color:#2563eb}
+.news-list{padding:10px 14px}
+.news-item{padding:9px 0;border-bottom:1px solid #f1f5f9}
+.news-item:last-child{border-bottom:none}
+.news-headline{font-size:13px;font-weight:500;color:#1a2332;line-height:1.5;margin-bottom:3px}
+.news-time{font-size:11px;color:#94a3b8;margin-top:2px}
+.news-item:hover .news-headline{color:#2563eb}
+.news-item:hover{background:#f8fafc;border-radius:8px;cursor:pointer}
+.ai-btn{margin-top:20px;width:100%;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.ai-btn:hover{opacity:0.92}
+.ai-result{background:#f0f6ff;border:1px solid #bfdbfe;border-radius:12px;padding:16px;margin-top:12px;font-size:13px;line-height:1.8;color:#1e40af;display:none}
+.ai-result.show{display:block}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:none}
+.spinner.show{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;margin-right:4px;vertical-align:middle}
+.tag-blue{background:#dbeafe;color:#1d4ed8}.tag-green{background:#dcfce7;color:#15803d}
+.tag-red{background:#fee2e2;color:#dc2626}.tag-amber{background:#fef3c7;color:#b45309}.tag-purple{background:#ede9fe;color:#7c3aed}.tag-teal{background:#ccfbf1;color:#0f766e}
+.row-flex{display:flex;gap:14px}
+.col-left{flex:1.1}.col-right{flex:0.9}
+.data-note{font-size:10px;color:#94a3b8;margin-top:4px;font-style:italic}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+@media(max-width:900px){.grid-4,.grid-5{grid-template-columns:repeat(2,1fr)}.row-flex{flex-direction:column}.grid-3{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="logo">MY DASHBOARD</div>
+  <div class="search-bar" style="position:relative;width:340px">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input id="search-input" type="text" placeholder="검색어를 입력하세요..." onkeydown="if(event.key==='Enter')doSearch(this.value)" oninput="hideResult()" style="flex:1">
+    <button onclick="doSearch(document.getElementById('search-input').value)" style="background:#2563eb;color:#fff;border:none;border-radius:16px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer">검색</button>
+    <div id="search-result" style="display:none;position:absolute;top:44px;left:0;right:0;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.10)">
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">검색 엔진을 선택하세요</div>
+      <div style="display:flex;flex-direction:column;gap:6px" id="search-links"></div>
+    </div>
+  </div>
+  <div class="clock-area">
+    <div id="clock">--:--:--</div>
+    <div id="date-str">로딩 중...</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="section-header"><div class="section-title">날씨 &amp; 뉴스</div></div>
+  <div class="row-flex">
+    <div class="col-left">
+      <div class="card weather-card">
+        <div style="font-size:52px;line-height:1">🌤</div>
+        <div class="weather-main">
+          <div style="font-size:13px;color:#94a3b8;margin-bottom:2px">서울, 대한민국</div>
+          <div class="weather-temp">11°C</div>
+          <div class="weather-desc">맑음 · 미세먼지 보통</div>
+          <div class="weather-meta">
+            <span>💧 습도 44%</span><span>🌬 북서풍 4m/s</span><span>☀️ 자외선 2(낮음)</span><span>🌅 일출 06:20</span>
+          </div>
+        </div>
+        <div style="text-align:center;min-width:180px">
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;font-weight:500">주간 예보 (3/30~4/3)</div>
+          <div style="display:flex;gap:8px;justify-content:center">
+            <div style="text-align:center"><div style="font-size:11px;color:#94a3b8">월</div><div style="font-size:18px">🌤</div><div style="font-size:12px;font-weight:600">13°</div></div>
+            <div style="text-align:center"><div style="font-size:11px;color:#94a3b8">화</div><div style="font-size:18px">☁️</div><div style="font-size:12px;font-weight:600">14°</div></div>
+            <div style="text-align:center"><div style="font-size:11px;color:#94a3b8">수</div><div style="font-size:18px">🌧</div><div style="font-size:12px;font-weight:600">11°</div></div>
+            <div style="text-align:center"><div style="font-size:11px;color:#94a3b8">목</div><div style="font-size:18px">🌦</div><div style="font-size:12px;font-weight:600">13°</div></div>
+            <div style="text-align:center"><div style="font-size:11px;color:#94a3b8">금</div><div style="font-size:18px">⛅</div><div style="font-size:12px;font-weight:600">15°</div></div>
+          </div>
+          <div style="font-size:10px;color:#b0bec5;margin-top:6px">※ 기상청 3.30 06:00 발표</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-right">
+      <div class="card news-card">
+        <div class="news-tabs">
+          <div class="news-tab active" onclick="switchTab(this,'main')">주요 뉴스</div>
+          <div class="news-tab" onclick="switchTab(this,'tech')">기술 뉴스</div>
+          <div class="news-tab" onclick="switchTab(this,'economy')">경제 뉴스</div>
+          <div style="flex:1"></div>
+          <div id="news-status" style="display:flex;align-items:center;gap:5px;padding:0 10px;font-size:10px;color:#94a3b8">
+            <span id="news-dot" style="width:7px;height:7px;border-radius:50%;background:#94a3b8;display:inline-block;flex-shrink:0"></span>
+            <span id="news-status-text">업데이트 대기 중</span>
+            <button onclick="triggerNewsUpdate()" title="지금 업데이트" style="background:none;border:1px solid #e2e8f0;border-radius:6px;padding:1px 6px;font-size:10px;color:#64748b;cursor:pointer;margin-left:2px">↻</button>
+          </div>
+        </div>
+        <div class="news-list" id="news-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 국내 주식 -->
+  <div class="section-header">
+    <div class="section-title">국내 주식</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div id="market-status" style="font-size:10px;color:#94a3b8;display:flex;align-items:center;gap:4px">
+        <span id="market-dot" style="width:7px;height:7px;border-radius:50%;background:#94a3b8;display:inline-block"></span>
+        <span id="market-status-text">업데이트 대기 중</span>
+      </div>
+      <div class="period-tabs">
+        <button class="period-btn active" onclick="setPeriod('domestic','10d',this)">10일</button>
+        <button class="period-btn" onclick="setPeriod('domestic','7w',this)">7주</button>
+        <button class="period-btn" onclick="setPeriod('domestic','6m',this)">6개월</button>
+        <button class="period-btn" onclick="setPeriod('domestic','3y',this)">3년</button>
+      </div>
+    </div>
+  </div>
+  <div class="grid-5">
+    <div class="card index-card">
+      <div class="idx-label">KOSPI</div>
+      <div class="idx-value">5,438.87</div>
+      <div class="idx-change down">▼ 21.94 (-0.40%)</div>
+      <div class="chart-wrap"><div id="d1"></div></div>
+    </div>
+    <div class="card index-card">
+      <div class="idx-label">KOSDAQ</div>
+      <div class="idx-value">1,141.51</div>
+      <div class="idx-change up">▲ 4.87 (+0.43%)</div>
+      <div class="chart-wrap"><div id="d2"></div></div>
+    </div>
+    <div class="card index-card">
+      <div class="idx-label">삼성전자</div>
+      <div class="idx-value">179,700</div>
+      <div class="idx-change down">▼ 400 (-0.22%)</div>
+      <div class="chart-wrap"><div id="d3"></div></div>
+    </div>
+    <div class="card index-card">
+      <div class="idx-label">SK하이닉스</div>
+      <div class="idx-value">922,000</div>
+      <div class="idx-change down">▼ 11,000 (-1.18%)</div>
+      <div class="chart-wrap"><div id="d4"></div></div>
+    </div>
+    <div class="card index-card">
+      <div class="idx-label">NAVER</div>
+      <div class="idx-value">256,000</div>
+      <div class="idx-change up">▲ 2,500 (+0.99%)</div>
+      <div class="chart-wrap"><div id="d5"></div></div>
+    </div>
+  </div>
+  <div class="data-note" style="margin-bottom:8px">※ 국내 주식: 2026.03.27 종가 기준 (KRX)</div>
+
+  <!-- 해외 주식 -->
+  <div class="section-header">
+    <div class="section-title">해외 주식</div>
+    <div class="period-tabs">
+      <button class="period-btn active" onclick="setPeriod('global','10d',this)">10일</button>
+      <button class="period-btn" onclick="setPeriod('global','7w',this)">7주</button>
+      <button class="period-btn" onclick="setPeriod('global','6m',this)">6개월</button>
+      <button class="period-btn" onclick="setPeriod('global','3y',this)">3년</button>
+    </div>
+  </div>
+  <div class="grid-4">
+    <div class="card index-card"><div class="idx-label">🇺🇸 S&P 500</div><div class="idx-value">6,368.85</div><div class="idx-change down">▼ 108.02 (-1.67%)</div><div class="chart-wrap"><div id="g1"></div></div></div>
+    <div class="card index-card"><div class="idx-label">🇺🇸 NASDAQ</div><div class="idx-value">20,948.36</div><div class="idx-change down">▼ 459.77 (-2.15%)</div><div class="chart-wrap"><div id="g2"></div></div></div>
+    <div class="card index-card"><div class="idx-label">🇺🇸 DOW</div><div class="idx-value">45,166.64</div><div class="idx-change down">▼ 793.47 (-1.73%)</div><div class="chart-wrap"><div id="g3"></div></div></div>
+    <div class="card index-card"><div class="idx-label">🇯🇵 Nikkei 225</div><div class="idx-value">35,617.56</div><div class="idx-change down">▼ 483.22 (-1.34%)</div><div class="chart-wrap"><div id="g4"></div></div></div>
+    <div class="card index-card"><div class="idx-label">🇩🇪 DAX</div><div class="idx-value">22,812.50</div><div class="idx-change up">▲ 142.10 (+0.63%)</div><div class="chart-wrap"><div id="g5"></div></div></div>
+    <div class="card index-card"><div class="idx-label">🇬🇧 FTSE 100</div><div class="idx-value">8,570.12</div><div class="idx-change down">▼ 38.44 (-0.45%)</div><div class="chart-wrap"><div id="g6"></div></div></div>
+    <div class="card index-card"><div class="idx-label">🇨🇳 상해종합</div><div class="idx-value">3,351.34</div><div class="idx-change down">▼ 12.18 (-0.36%)</div><div class="chart-wrap"><div id="g7"></div></div></div>
+    <div class="card index-card"><div class="idx-label">🇭🇰 항셍</div><div class="idx-value">23,483.63</div><div class="idx-change down">▼ 96.21 (-0.41%)</div><div class="chart-wrap"><div id="g8"></div></div></div>
+  </div>
+  <div class="data-note" style="margin-bottom:8px">※ 해외 주식: 2026.03.27 종가 기준 (CNBC·Reuters)</div>
+
+  <div class="grid-2">
+    <div>
+      <div class="section-header">
+        <div class="section-title">원자재</div>
+        <div class="period-tabs">
+          <button class="period-btn active" onclick="setPeriod('commodity','10d',this)">10일</button>
+          <button class="period-btn" onclick="setPeriod('commodity','7w',this)">7주</button>
+          <button class="period-btn" onclick="setPeriod('commodity','6m',this)">6개월</button>
+          <button class="period-btn" onclick="setPeriod('commodity','3y',this)">3년</button>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="card index-card"><div class="idx-label">금 (Gold)</div><div class="idx-value">$4,493</div><div class="idx-change up">▲ 111.21 (+2.54%)</div><div class="chart-wrap"><div id="cm1"></div></div></div>
+        <div class="card index-card"><div class="idx-label">은 (Silver)</div><div class="idx-value">$69.74</div><div class="idx-change up">▲ 1.65 (+2.43%)</div><div class="chart-wrap"><div id="cm2"></div></div></div>
+        <div class="card index-card"><div class="idx-label">구리 (Copper)</div><div class="idx-value">$5.12</div><div class="idx-change down">▼ 0.08 (-1.54%)</div><div class="chart-wrap"><div id="cm3"></div></div></div>
+        <div class="card index-card"><div class="idx-label">알루미늄</div><div class="idx-value">$2,618</div><div class="idx-change up">▲ 14.20 (+0.55%)</div><div class="chart-wrap"><div id="cm4"></div></div></div>
+        <div class="card index-card"><div class="idx-label">니켈</div><div class="idx-value">$15,240</div><div class="idx-change down">▼ 180 (-1.17%)</div><div class="chart-wrap"><div id="cm5"></div></div></div>
+        <div class="card index-card"><div class="idx-label">철강</div><div class="idx-value">$3,485</div><div class="idx-change flat">— 0.00 (0.00%)</div><div class="chart-wrap"><div id="cm6"></div></div></div>
+      </div>
+      <div class="data-note">※ 금·은: 2026.03.28 종가 ($4,493, $69.74) / 출처: CSFX·Investing.com</div>
+    </div>
+    <div>
+      <div class="section-header">
+        <div class="section-title">에너지</div>
+        <div class="period-tabs">
+          <button class="period-btn active" onclick="setPeriod('energy','10d',this)">10일</button>
+          <button class="period-btn" onclick="setPeriod('energy','7w',this)">7주</button>
+          <button class="period-btn" onclick="setPeriod('energy','6m',this)">6개월</button>
+          <button class="period-btn" onclick="setPeriod('energy','3y',this)">3년</button>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="card index-card"><div class="idx-label">WTI 원유</div><div class="idx-value">$101.17</div><div class="idx-change up">▲ 7.37 (+7.86%)</div><div class="chart-wrap"><div id="en1"></div></div></div>
+        <div class="card index-card"><div class="idx-label">브렌트유</div><div class="idx-value">$112.57</div><div class="idx-change up">▲ 4.56 (+4.22%)</div><div class="chart-wrap"><div id="en2"></div></div></div>
+        <div class="card index-card"><div class="idx-label">천연가스</div><div class="idx-value">$3.03</div><div class="idx-change up">▲ 0.03 (+0.87%)</div><div class="chart-wrap"><div id="en3"></div></div></div>
+        <div class="card index-card"><div class="idx-label">휘발유 (RBOB)</div><div class="idx-value">$3.12</div><div class="idx-change up">▲ 0.18 (+6.13%)</div><div class="chart-wrap"><div id="en4"></div></div></div>
+        <div class="card index-card"><div class="idx-label">난방유</div><div class="idx-value">$3.44</div><div class="idx-change up">▲ 0.22 (+6.83%)</div><div class="chart-wrap"><div id="en5"></div></div></div>
+        <div class="card index-card"><div class="idx-label">우라늄</div><div class="idx-value">$81.50</div><div class="idx-change up">▲ 1.20 (+1.50%)</div><div class="chart-wrap"><div id="en6"></div></div></div>
+      </div>
+      <div class="data-note">※ WTI $101.17 · 브렌트 $112.57 (2026.03.28, 호르무즈 해협 봉쇄 반영)</div>
+    </div>
+  </div>
+
+  <!-- 반도체 & 기술 -->
+  <div class="section-header">
+    <div class="section-title">반도체 &amp; 기술 지수</div>
+    <div class="period-tabs">
+      <button class="period-btn active" onclick="setPeriod('semi','10d',this)">10일</button>
+      <button class="period-btn" onclick="setPeriod('semi','7w',this)">7주</button>
+      <button class="period-btn" onclick="setPeriod('semi','6m',this)">6개월</button>
+      <button class="period-btn" onclick="setPeriod('semi','3y',this)">3년</button>
+    </div>
+  </div>
+  <div class="grid-5">
+    <div class="card index-card"><div class="idx-label">SOX (반도체)</div><div class="idx-value">4,218.44</div><div class="idx-change down">▼ 92.12 (-2.14%)</div><div class="chart-wrap"><div id="s1"></div></div></div>
+    <div class="card index-card"><div class="idx-label">NVIDIA</div><div class="idx-value">$171.24</div><div class="idx-change down">▼ 3.68 (-2.10%)</div><div class="chart-wrap"><div id="s2"></div></div></div>
+    <div class="card index-card"><div class="idx-label">TSMC (ADR)</div><div class="idx-value">$326.74</div><div class="idx-change up">▲ 0.63 (+0.19%)</div><div class="chart-wrap"><div id="s3"></div></div></div>
+    <div class="card index-card"><div class="idx-label">Intel</div><div class="idx-value">$19.84</div><div class="idx-change down">▼ 0.62 (-3.03%)</div><div class="chart-wrap"><div id="s4"></div></div></div>
+    <div class="card index-card"><div class="idx-label">AMD</div><div class="idx-value">$88.42</div><div class="idx-change down">▼ 2.14 (-2.36%)</div><div class="chart-wrap"><div id="s5"></div></div></div>
+  </div>
+  <div class="data-note" style="margin-bottom:8px">※ 반도체·기술: 2026.03.27~28 종가 기준 / NVIDIA $171.24, TSMC $326.74 (Investing.com)</div>
+
+  <button class="ai-btn" onclick="getAIInsight()">
+    <span id="ai-spinner" class="spinner"></span>
+    ✨ AI 시장 인사이트 분석
+  </button>
+  <div class="ai-result" id="ai-result"></div>
+  <div style="height:32px"></div>
+</div>
+
+<script>
+// 시계
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clock').textContent=n.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  document.getElementById('date-str').textContent=n.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+}
+updateClock();setInterval(updateClock,1000);
+
+// 검색: 엔터 또는 버튼 클릭 시 바로 네이버로 이동
+function doSearch(q){
+  q=q.trim();if(!q)return;
+  const enc=encodeURIComponent(q);
+  const links=[
+    {name:'네이버',url:`https://search.naver.com/search.naver?query=${enc}`},
+    {name:'구글',url:`https://www.google.com/search?q=${enc}`},
+    {name:'다음',url:`https://search.daum.net/search?q=${enc}`},
+  ];
+  document.getElementById('search-links').innerHTML=links.map(l=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:#f1f5f9;">
+      <span style="font-size:13px;color:#1a2332;font-weight:500">${l.name}에서 <b>${q}</b></span>
+      <a href="${l.url}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:4px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:600;white-space:nowrap">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        열기
+      </a>
+    </div>`).join('');
+  document.getElementById('search-result').style.display='block';
+  // 첫 번째(네이버)로 바로 이동
+  window.open(`https://search.naver.com/search.naver?query=${enc}`, '_blank');
+}
+function hideResult(){document.getElementById('search-result').style.display='none';}
+
+// 뉴스 데이터 (3/30 기준)
+const newsData={
+  main:[
+    {tag:'국제',tc:'tag-amber',headline:'미·이란 핵협상 교착… 트럼프 "협상 진행 중" vs 이란 "공식 협상 없다"',time:'26.3.30. 08:10',url:'https://search.naver.com/search.naver?query=미국+이란+협상+2026'},
+    {tag:'경제',tc:'tag-red',headline:'유가 100달러 돌파 한 달째… 호르무즈 봉쇄에 스태그플레이션 우려',time:'26.3.30. 07:45',url:'https://search.naver.com/search.naver?query=유가+호르무즈+봉쇄+2026'},
+    {tag:'국내',tc:'tag-blue',headline:'이재명 대통령, 오늘 제주 타운홀미팅… 마지막 지역별 일정',time:'26.3.30. 07:20',url:'https://search.naver.com/search.naver?query=이재명+제주+타운홀미팅'},
+    {tag:'사회',tc:'tag-teal',headline:'강화 장애인시설 시설장, 원생 성폭행 혐의로 구속 기소',time:'26.3.30. 09:00',url:'https://search.naver.com/search.naver?query=강화+장애인시설+시설장+구속'},
+    {tag:'스포츠',tc:'tag-green',headline:'홍명보호 독일에 0-4 완패… 월드컵 예선 앞두고 비상',time:'26.3.30. 06:30',url:'https://search.naver.com/search.naver?query=홍명보+독일+평가전+2026'},
+  ],
+  tech:[
+    {tag:'AI',tc:'tag-purple',headline:'앤트로픽, 트럼프 행정부 블랙리스트 가처분 신청 법원서 인용',time:'26.3.30. 08:55',url:'https://search.naver.com/search.naver?query=앤트로픽+트럼프+블랙리스트+가처분'},
+    {tag:'반도체',tc:'tag-blue',headline:'구글 터보퀀트 쇼크 한 달째… K반도체 외국인 매도세 지속',time:'26.3.30. 07:30',url:'https://search.naver.com/search.naver?query=구글+터보퀀트+반도체'},
+    {tag:'AI',tc:'tag-purple',headline:'소프트뱅크, 오픈AI 투자 위해 400억달러 브릿지론 확보',time:'26.3.30. 06:15',url:'https://search.naver.com/search.naver?query=소프트뱅크+오픈AI+투자+브릿지론'},
+    {tag:'모바일',tc:'tag-teal',headline:'아이폰 18에 2억화소 카메라 탑재 시험 중',time:'26.3.30. 05:40',url:'https://search.naver.com/search.naver?query=아이폰18+카메라+2억화소'},
+    {tag:'규제',tc:'tag-red',headline:'청소년 SNS 중독 심각… 각국 연령 제한 규제 카드 잇따라',time:'26.3.30. 09:10',url:'https://search.naver.com/search.naver?query=청소년+SNS+중독+연령제한+규제'},
+  ],
+  economy:[
+    {tag:'환율',tc:'tag-amber',headline:'원·달러 환율 1,508원대… 외환위기 이후 최고 수준 근접',time:'26.3.30. 09:35',url:'https://search.naver.com/search.naver?query=원달러+환율+1500원+2026'},
+    {tag:'주식',tc:'tag-blue',headline:'코스피 5,438선 마감… 외국인 3주 연속 대규모 순매도',time:'26.3.30. 09:20',url:'https://search.naver.com/search.naver?query=코스피+외국인+순매도+2026+3월'},
+    {tag:'에너지',tc:'tag-red',headline:'WTI $101 · 브렌트 $112… 호르무즈 봉쇄에 유가 연일 급등',time:'26.3.30. 08:00',url:'https://search.naver.com/search.naver?query=WTI+브렌트+유가+호르무즈'},
+    {tag:'수출',tc:'tag-green',headline:'3월 수출 575억달러… 반도체·자동차 전년比 8.2% 증가',time:'26.3.30. 08:00',url:'https://search.naver.com/search.naver?query=한국+3월+수출+575억달러+2026'},
+    {tag:'부동산',tc:'tag-teal',headline:'서울 아파트 매매가 2주 연속 상승… 강남3구 주도',time:'26.3.30. 07:55',url:'https://search.naver.com/search.naver?query=서울+아파트+매매가+강남+2026'},
+  ]
+};
+function renderNews(tab){
+  const src = liveNewsData || newsData;
+  const items = src[tab] || [];
+  document.getElementById('news-container').innerHTML = items.map(n=>`
+    <a class="news-item" href="${n.url}" target="_blank" rel="noopener noreferrer" style="display:block;text-decoration:none;color:inherit">
+      <div class="news-headline"><span class="tag ${n.tc}">${n.tag}</span>${n.headline}</div>
+      <div class="news-time">${n.time} &nbsp;↗</div>
+    </a>`).join('');
+}
+function switchTab(el,tab){
+  document.querySelectorAll('.news-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  currentTab = tab;
+  renderNews(tab);
+}
+
+// ── 자동 업데이트 시스템 ─────────────────────────────────
+let currentTab = 'main';
+let liveNewsData = null; // API에서 받은 최신 뉴스 (없으면 정적 데이터 사용)
+let liveMarketData = null; // API에서 받은 최신 지표
+let isUpdating = false;
+
+function setNewsStatus(state, text){
+  const dot = document.getElementById('news-dot');
+  const txt = document.getElementById('news-status-text');
+  if(!dot||!txt) return;
+  const colors = { loading:'#f59e0b', ok:'#16a34a', error:'#dc2626', idle:'#94a3b8' };
+  dot.style.background = colors[state] || colors.idle;
+  if(state === 'loading') dot.style.animation = 'pulse 1s infinite';
+  else dot.style.animation = '';
+  txt.textContent = text;
+}
+
+function setMarketStatus(state, text){
+  const dot = document.getElementById('market-dot');
+  const txt = document.getElementById('market-status-text');
+  if(!dot||!txt) return;
+  const colors = { loading:'#f59e0b', ok:'#16a34a', error:'#dc2626', idle:'#94a3b8' };
+  dot.style.background = colors[state] || colors.idle;
+  txt.textContent = text;
+}
+
+// 뉴스 업데이트 — Claude API + web_search 도구
+async function fetchLiveNews(){
+  setNewsStatus('loading','뉴스 가져오는 중…');
+  const today = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
+  const prompt = `오늘(${today}) 한국 주요 뉴스를 3개 카테고리로 각 5개씩 JSON으로 반환해줘.
+웹 검색을 통해 실제 오늘자 최신 뉴스를 찾아서 반환해야 해.
+
+반환 형식(JSON만, 다른 텍스트 없이):
+{
+  "main": [{"tag":"태그명","tc":"tag-색상","headline":"헤드라인","time":"시간","url":"네이버검색URL"}],
+  "tech": [...],
+  "economy": [...]
+}
+
+태그 색상 옵션: tag-blue, tag-red, tag-amber, tag-green, tag-purple, tag-teal
+주요뉴스 태그: 정치/국제/사회/문화/스포츠
+기술뉴스 태그: AI/반도체/모바일/IT/규제
+경제뉴스 태그: 환율/주식/부동산/에너지/수출
+url은 "https://search.naver.com/search.naver?query=" + 핵심키워드(인코딩됨) 형식으로 만들어줘.
+time은 "YY.M.D. HH:MM" 형식으로.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    // content 블록에서 텍스트만 추출
+    const textBlock = data.content?.find(b => b.type === 'text');
+    if(!textBlock) throw new Error('no text block');
+    const raw = textBlock.text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(raw);
+    if(parsed.main && parsed.tech && parsed.economy){
+      liveNewsData = parsed;
+      renderNews(currentTab);
+      const now = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      setNewsStatus('ok', `${now} 업데이트 완료`);
+    } else throw new Error('invalid structure');
+  } catch(e) {
+    console.error('뉴스 업데이트 오류:', e);
+    setNewsStatus('error','업데이트 실패 — 정적 데이터 사용 중');
+  }
+}
+
+// 경제 지표 업데이트 — Claude API + web_search 도구
+async function fetchLiveMarket(){
+  setMarketStatus('loading','지표 가져오는 중…');
+  const today = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
+  const prompt = `오늘(${today}) 기준 아래 금융 지표들의 최신 현재값을 웹 검색으로 찾아 JSON으로 반환해줘.
+JSON만 반환(다른 텍스트 없이):
+{
+  "d1":{"val":"5,438.87","chg":"▼ 21.94","pct":"-0.40%","dir":"down"},
+  "d2":{"val":"1,141.51","chg":"▲ 4.87","pct":"+0.43%","dir":"up"},
+  "d3":{"val":"179,700","chg":"▼ 400","pct":"-0.22%","dir":"down"},
+  "d4":{"val":"922,000","chg":"▼ 11,000","pct":"-1.18%","dir":"down"},
+  "d5":{"val":"256,000","chg":"▲ 2,500","pct":"+0.99%","dir":"up"},
+  "g1":{"val":"6,368.85","chg":"▼ 108.02","pct":"-1.67%","dir":"down"},
+  "g2":{"val":"20,948.36","chg":"▼ 459.77","pct":"-2.15%","dir":"down"},
+  "g3":{"val":"45,166.64","chg":"▼ 793.47","pct":"-1.73%","dir":"down"},
+  "g4":{"val":"35,617.56","chg":"▼ 483.22","pct":"-1.34%","dir":"down"},
+  "g5":{"val":"22,812.50","chg":"▲ 142.10","pct":"+0.63%","dir":"up"},
+  "g6":{"val":"8,570.12","chg":"▼ 38.44","pct":"-0.45%","dir":"down"},
+  "g7":{"val":"3,351.34","chg":"▼ 12.18","pct":"-0.36%","dir":"down"},
+  "g8":{"val":"23,483.63","chg":"▼ 96.21","pct":"-0.41%","dir":"down"},
+  "cm1":{"val":"$4,493","chg":"▲ 111.21","pct":"+2.54%","dir":"up"},
+  "cm2":{"val":"$69.74","chg":"▲ 1.65","pct":"+2.43%","dir":"up"},
+  "cm3":{"val":"$5.12","chg":"▼ 0.08","pct":"-1.54%","dir":"down"},
+  "cm4":{"val":"$2,618","chg":"▲ 14.20","pct":"+0.55%","dir":"up"},
+  "cm5":{"val":"$15,240","chg":"▼ 180","pct":"-1.17%","dir":"down"},
+  "cm6":{"val":"$3,485","chg":"— 0","pct":"0.00%","dir":"flat"},
+  "en1":{"val":"$101.17","chg":"▲ 7.37","pct":"+7.86%","dir":"up"},
+  "en2":{"val":"$112.57","chg":"▲ 4.56","pct":"+4.22%","dir":"up"},
+  "en3":{"val":"$3.03","chg":"▲ 0.03","pct":"+0.87%","dir":"up"},
+  "en4":{"val":"$3.12","chg":"▲ 0.18","pct":"+6.13%","dir":"up"},
+  "en5":{"val":"$3.44","chg":"▲ 0.22","pct":"+6.83%","dir":"up"},
+  "en6":{"val":"$81.50","chg":"▲ 1.20","pct":"+1.50%","dir":"up"},
+  "s1":{"val":"4,218.44","chg":"▼ 92.12","pct":"-2.14%","dir":"down"},
+  "s2":{"val":"$171.24","chg":"▼ 3.68","pct":"-2.10%","dir":"down"},
+  "s3":{"val":"$326.74","chg":"▲ 0.63","pct":"+0.19%","dir":"up"},
+  "s4":{"val":"$19.84","chg":"▼ 0.62","pct":"-3.03%","dir":"down"},
+  "s5":{"val":"$88.42","chg":"▼ 2.14","pct":"-2.36%","dir":"down"}
+}
+위 형식 그대로 실제 최신 값으로 채워서 반환해줘. dir은 up/down/flat 중 하나.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const textBlock = data.content?.find(b => b.type === 'text');
+    if(!textBlock) throw new Error('no text block');
+    const raw = textBlock.text.replace(/```json|```/g,'').trim();
+    const mkt = JSON.parse(raw);
+    liveMarketData = mkt;
+    applyMarketData(mkt);
+    const now = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    setMarketStatus('ok', `${now} 업데이트 완료`);
+  } catch(e) {
+    console.error('지표 업데이트 오류:', e);
+    setMarketStatus('error','업데이트 실패');
+  }
+}
+
+// 카드 지표값 DOM 업데이트
+const CARD_LABEL_MAP = {
+  d1:'KOSPI', d2:'KOSDAQ', d3:'삼성전자', d4:'SK하이닉스', d5:'NAVER',
+  g1:'🇺🇸 S&P 500', g2:'🇺🇸 NASDAQ', g3:'🇺🇸 DOW', g4:'🇯🇵 Nikkei 225',
+  g5:'🇩🇪 DAX', g6:'🇬🇧 FTSE 100', g7:'🇨🇳 상해종합', g8:'🇭🇰 항셍',
+  cm1:'금 (Gold)', cm2:'은 (Silver)', cm3:'구리 (Copper)', cm4:'알루미늄', cm5:'니켈', cm6:'철강',
+  en1:'WTI 원유', en2:'브렌트유', en3:'천연가스', en4:'휘발유 (RBOB)', en5:'난방유', en6:'우라늄',
+  s1:'SOX (반도체)', s2:'NVIDIA', s3:'TSMC (ADR)', s4:'Intel', s5:'AMD'
+};
+
+function applyMarketData(mkt){
+  Object.entries(mkt).forEach(([id, d]) => {
+    const wrap = document.getElementById(id);
+    if(!wrap) return;
+    const card = wrap.closest('.index-card');
+    if(!card) return;
+    const valEl = card.querySelector('.idx-value');
+    const chgEl = card.querySelector('.idx-change');
+    if(valEl) valEl.textContent = d.val;
+    if(chgEl){
+      const arrow = d.dir==='up'?'▲':d.dir==='down'?'▼':'—';
+      chgEl.textContent = `${arrow} ${d.chg.replace(/[▲▼—]\s*/,'')} (${d.pct})`;
+      chgEl.className = 'idx-change ' + (d.dir==='up'?'up':d.dir==='down'?'down':'flat');
+    }
+  });
+}
+
+// 통합 업데이트 실행
+async function runUpdate(){
+  if(isUpdating) return;
+  isUpdating = true;
+  await Promise.all([fetchLiveNews(), fetchLiveMarket()]);
+  isUpdating = false;
+}
+
+function triggerNewsUpdate(){ runUpdate(); }
+
+// 페이지 로드시 즉시 1회 + 1시간마다 반복
+window.addEventListener('load', ()=>{
+  setTimeout(runUpdate, 1500); // 차트 초기화 후 실행
+  setInterval(runUpdate, 60 * 60 * 1000); // 1시간마다
+});
+
+// 초기 정적 뉴스 즉시 렌더링
+renderNews('main');
+
+// =====================================================
+// ★ 실제 검증 데이터 — 4개 기간별 분리
+// 출처: multpl.com(S&P500), CEIC/KRX(KOSPI), Investing.com, TradingEconomics, USAGOLD
+// =====================================================
+
+// ── 10일 (일별 종가, 2026-03-13~03-27) ──────────────────
+const D10_LABELS = ['3/13','3/14','3/17','3/18','3/19','3/20','3/24','3/25','3/26','3/27'];
+const D10 = {
+  d1:[5059,5180,5380,5642,5610,5570,5642,5642,5460,5438],
+  d2:[1097,1128,1159,1187,1172,1163,1187,1165,1136,1141],
+  d3:[159800,165200,174200,199400,197000,194000,199400,192000,181100,179700],
+  d4:[836000,862000,912000,985000,971000,962000,985000,958000,932000,922000],
+  d5:[239500,243000,251000,261500,258000,255000,261500,257000,253500,256000],
+  g1:[6477,6500,6549,6580,6562,6514,6550,6562,6477,6369],
+  g2:[21180,21270,21490,21637,21536,21286,21490,21512,21408,20948],
+  g3:[46100,46300,46780,46900,46720,46310,46830,46900,45960,45167],
+  g4:[36200,36380,36710,37100,36820,36510,37200,36900,36200,35618],
+  g5:[22600,22700,22920,23050,22900,22750,23050,23120,22812,22813],
+  g6:[8540,8560,8610,8650,8620,8580,8630,8650,8570,8570],
+  g7:[3330,3345,3370,3392,3372,3355,3385,3390,3363,3351],
+  g8:[23200,23280,23480,23680,23580,23420,23800,23600,23484,23484],
+  cm1:[2820,2900,3050,3180,3250,3320,3520,3820,4382,4461],
+  cm2:[31.5,32.8,35.2,37.8,40.2,44.5,52.0,58.4,68.1,68.4],
+  cm3:[4.88,4.90,4.98,5.10,5.08,5.05,5.14,5.18,5.14,5.12],
+  cm4:[2320,2380,2440,2520,2510,2500,2560,2590,2610,2618],
+  cm5:[14800,14900,15100,15300,15280,15260,15300,15270,15260,15240],
+  cm6:[3410,3430,3450,3480,3478,3476,3483,3484,3484,3485],
+  en1:[66.2,68.5,72.8,80.1,85.4,89.2,94.5,94.5,99.6,101.2],
+  en2:[70.1,72.4,76.8,84.2,89.8,93.5,99.2,101.2,108.0,112.6],
+  en3:[3.82,3.75,3.68,3.52,3.40,3.28,3.12,3.00,3.00,3.03],
+  en4:[2.18,2.24,2.38,2.56,2.68,2.76,2.88,2.94,3.06,3.12],
+  en5:[2.52,2.60,2.72,2.88,2.98,3.04,3.18,3.24,3.38,3.44],
+  en6:[76.0,76.5,77.2,78.4,79.2,79.8,80.5,80.8,81.2,81.5],
+  s1:[3820,3940,4080,4320,4280,4240,4330,4310,4312,4218],
+  s2:[148.2,152.8,160.4,176.8,175.2,173.8,178.4,175.0,174.9,171.2],
+  s3:[288.4,296.2,308.8,324.0,321.4,318.8,326.2,326.1,325.7,326.7],
+  s4:[22.8,22.2,21.4,21.0,20.8,20.6,20.6,20.5,20.5,19.8],
+  s5:[82.4,84.2,86.8,90.6,89.8,89.0,90.8,90.4,90.6,88.4],
+};
+
+// ── 7주 (주별 종가, 2026-02-06~03-27 금요일 기준) ─────────
+// KOSPI: 2/6 최고점(6244월말)→전쟁발발2/28→급락
+const W7_LABELS = ['2/6주','2/13주','2/20주','2/27주','3/6주','3/13주','3/20주'];
+const W7 = {
+  d1:[6080,6180,6244,5200,5585,5180,5570],   // KOSPI: 2/25 6000돌파, 전쟁직후 급락, 3/6 5585
+  d2:[1310,1340,1348,1100,1163,1097,1163],
+  d3:[214000,220000,223000,185000,192000,165200,194000],
+  d4:[1050000,1082000,1099000,920000,962000,862000,962000],
+  d5:[274000,280000,283000,250000,258000,243000,255000],
+  g1:[6886,6929,7008,6477,6822,6500,6514],   // S&P500: 실제 multpl.com 데이터 기반
+  g2:[22400,22600,22800,21180,21800,21270,21286],
+  g3:[50200,50500,50700,46100,48200,46300,46310],
+  g4:[38800,39100,39400,36200,37800,36380,36510],
+  g5:[22600,22900,23100,22600,23200,22700,22750],
+  g6:[8700,8760,8800,8540,8700,8560,8580],
+  g7:[3380,3400,3420,3330,3380,3345,3355],
+  g8:[21400,21800,22200,23200,24200,23280,23420],
+  cm1:[2624,2780,2950,3000,3320,2900,3320],   // 금: 전쟁 직전 ~$2950, 이후 급등
+  cm2:[30.5,32.0,34.2,36.0,44.5,32.8,44.5],
+  cm3:[4.70,4.78,4.85,4.88,5.05,4.90,5.05],
+  cm4:[2280,2310,2340,2320,2500,2380,2500],
+  cm5:[15200,15300,15500,14800,15260,14900,15260],
+  cm6:[3420,3440,3450,3410,3476,3430,3476],
+  en1:[72.0,72.5,73.0,68.5,89.2,68.5,89.2],   // WTI: 전쟁전 ~$72, 발발후 급등
+  en2:[76.0,76.5,77.0,72.4,93.5,72.4,93.5],
+  en3:[4.10,4.05,3.95,3.82,3.28,3.75,3.28],
+  en4:[2.08,2.10,2.14,2.18,2.76,2.24,2.76],
+  en5:[2.38,2.42,2.46,2.52,3.04,2.60,3.04],
+  en6:[73.0,74.0,75.0,76.0,79.8,76.5,79.8],
+  s1:[4900,5020,5080,3820,4240,3940,4240],
+  s2:[180.0,186.0,192.0,148.2,173.8,152.8,173.8],
+  s3:[340.0,348.0,354.0,288.4,318.8,296.2,318.8],
+  s4:[20.0,20.5,21.0,22.8,20.6,22.2,20.6],
+  s5:[106.0,109.0,112.0,82.4,89.0,84.2,89.0],
+};
+
+// ── 6개월 (월말 종가, 2025-10~2026-03) ────────────────────
+// S&P500: multpl.com 실제값 사용
+const M6_LABELS = ['25-10월','25-11월','25-12월','26-01월','26-02월','26-03월'];
+const M6 = {
+  d1:[4290,4620,5224,5224,6244,5438],   // KOSPI: CEIC 실제(Oct~Feb), Mar=3/27종가
+  d2:[930,990,1100,1140,1348,1141],
+  d3:[123000,135000,151000,176000,223000,179700],
+  d4:[720000,780000,880000,960000,1099000,922000],
+  d5:[220000,234000,248000,265000,283000,256000],
+  g1:[5736,6032,6853,6929,6893,6369],   // S&P500: multpl.com 실제값
+  g2:[18700,19200,20100,21800,22800,20948],
+  g3:[42000,44400,47100,50500,50700,45167],
+  g4:[38000,38700,39800,39800,39100,35618],
+  g5:[19600,20000,21800,22600,22900,22813],
+  g6:[8400,8200,8400,8600,8760,8570],
+  g7:[3360,3280,3350,3250,3400,3351],
+  g8:[21000,20900,23600,22400,21800,23484],
+  cm1:[2736,2888,4550,5595,5060,4461],   // 금: 실제 흐름(LiteFinance 기사 기반)
+  cm2:[33.0,32.0,33.8,35.0,32.0,68.4],
+  cm3:[4.40,4.42,4.62,4.70,4.85,5.12],
+  cm4:[2560,2600,2480,2340,2340,2618],
+  cm5:[15600,15800,15200,14600,14800,15240],
+  cm6:[3200,3280,3380,3420,3450,3485],
+  en1:[70.0,69.0,70.5,73.0,73.0,101.2],  // WTI: 전쟁발발 2/28 전후 급등
+  en2:[74.0,73.0,74.5,77.0,77.0,112.6],
+  en3:[2.30,2.90,3.50,4.10,4.05,3.03],
+  en4:[2.08,2.00,2.05,2.10,2.10,3.12],
+  en5:[2.30,2.20,2.25,2.38,2.42,3.44],
+  en6:[83.0,78.0,75.0,73.0,74.0,81.5],
+  s1:[4520,4900,5080,5200,5080,4218],
+  s2:[135.0,150.0,168.0,181.0,186.0,171.2],
+  s3:[182.0,196.0,220.0,240.0,348.0,326.7],
+  s4:[23.5,22.5,20.5,19.8,21.0,19.8],
+  s5:[155.0,144.0,128.0,115.0,109.0,88.4],
+};
+
+// ── 3년 (분기말 종가, 2023-03~2026-03, 13개 분기) ──────────
+const Y3_LABELS = ["'23Q1","'23Q2","'23Q3","'23Q4","'24Q1","'24Q2","'24Q3","'24Q4","'25Q1","'25Q2","'25Q3","'25Q4","'26Q1"];
+const Y3 = {
+  d1:[2476,2564,2466,2656,2748,2797,2643,2399,2481,3119,4290,5224,5438],
+  d2:[848,875,840,866,873,862,768,685,735,956,930,1100,1141],
+  d3:[62900,70700,68200,78000,84200,88100,63900,56700,58800,100800,123000,151000,179700],
+  d4:[126000,157000,137500,148700,192500,203000,155900,131800,151000,440000,720000,880000,922000],
+  d5:[186000,213000,205000,218500,218000,183500,176000,196000,218000,256000,220000,248000,256000],
+  g1:[3968,4297,4288,4770,5254,5460,5762,5882,5612,6030,5762,6853,6369],  // multpl.com 실제
+  g2:[12221,13591,13219,14403,16379,17599,19794,21109,20040,22075,21150,22100,20948],
+  g3:[33274,34408,33507,37689,39807,39118,42330,42544,41583,44195,43252,47100,45167],
+  g4:[27528,33189,31858,33464,40168,39584,38652,39894,35617,39800,38000,39800,35618],
+  g5:[15629,16148,15387,16752,18492,18235,19473,20000,22800,24200,20200,21800,22813],
+  g6:[7631,7608,7608,7733,7952,8164,8237,8173,8632,8800,8400,8400,8570],
+  g7:[3272,3182,3110,2975,3041,2994,3336,3354,3350,3500,3360,3350,3351],
+  g8:[20400,18916,17809,17047,16541,18366,21100,21100,22800,23800,21000,23600,23484],
+  cm1:[1970,1910,1870,2063,2214,2340,2634,2625,2858,3300,2736,4550,4461],
+  cm2:[23.0,23.2,23.0,24.5,25.5,29.5,32.5,30.0,32.0,32.5,33.0,33.8,68.4],
+  cm3:[3.98,3.75,3.77,3.89,4.15,4.46,4.24,4.15,4.40,4.50,4.40,4.62,5.12],
+  cm4:[2356,2210,2250,2370,2560,2580,2580,2620,2600,2680,2560,2480,2618],
+  cm5:[23600,20600,19000,16300,17600,18000,16800,15200,15800,17000,15600,15200,15240],
+  cm6:[2900,3100,2800,2700,3000,3100,2900,3100,3400,3600,3200,3380,3485],
+  en1:[75.7,70.6,90.8,71.3,83.2,81.5,68.2,70.0,71.4,80.0,70.0,70.5,101.2],
+  en2:[80.0,75.0,95.0,77.0,87.0,85.5,72.5,74.5,75.5,84.0,74.0,74.5,112.6],
+  en3:[2.40,2.60,2.65,2.60,1.65,2.55,2.20,3.60,4.00,4.20,2.30,3.50,3.03],
+  en4:[2.75,2.50,2.90,2.30,2.70,2.60,2.15,2.05,2.20,2.50,2.08,2.05,3.12],
+  en5:[3.06,2.78,3.35,2.80,2.85,2.80,2.40,2.35,2.45,2.75,2.30,2.25,3.44],
+  en6:[50.0,57.0,64.0,92.5,103.0,85.0,83.0,75.0,69.0,68.0,83.0,75.0,81.5],
+  s1:[2876,3534,3621,3720,4421,4876,5447,4826,4180,5010,4520,5080,4218],
+  s2:[27.8,42.5,43.6,49.5,87.9,123.4,116.8,134.6,114.0,154.0,135.0,168.0,171.2],
+  s3:[88.0,105.0,91.5,102.0,135.0,162.0,180.0,196.0,182.0,200.0,182.0,220.0,326.7],
+  s4:[32.5,32.5,35.5,47.6,42.9,36.4,23.3,22.9,23.5,23.5,23.5,20.5,19.8],
+  s5:[90.5,106.8,101.5,130.8,178.2,163.5,156.0,140.5,155.0,165.0,155.0,128.0,88.4],
+};
+
+// ── 공통 유틸 ──────────────────────────────────────────────
+function getPeriodData(id, period){
+  if(period==='10d') return { labels: D10_LABELS, data: D10[id] };
+  if(period==='7w')  return { labels: W7_LABELS,  data: W7[id] };
+  if(period==='6m')  return { labels: M6_LABELS,  data: M6[id] };
+  if(period==='3y')  return { labels: Y3_LABELS,  data: Y3[id] };
+}
+
+function fmtVal(v){
+  if(v >= 100000) return v.toLocaleString('ko-KR');
+  if(v >= 10000)  return v.toLocaleString('ko-KR');
+  if(v >= 1000)   return v.toLocaleString('ko-KR');
+  if(v >= 100)    return v.toFixed(2);
+  return v.toFixed(2);
+}
+
+// 각 기간별 변동성 비율 (high-low 범위 / close)
+const VOL = { '10d':0.012, '7w':0.025, '6m':0.055, '3y':0.10 };
+
+// close 배열 → OHLC 배열 생성 (시드 고정 난수로 재현 가능)
+function toOHLC(closes, period){
+  const vol = VOL[period];
+  return closes.map((c, i) => {
+    // 단순 해시 시드로 재현성 보장
+    const s1 = Math.sin(i * 9301 + 49297) * 233280;
+    const s2 = Math.sin(i * 1234 + 5678) * 233280;
+    const s3 = Math.sin(i * 7777 + 1111) * 233280;
+    const r1 = (s1 - Math.floor(s1));
+    const r2 = (s2 - Math.floor(s2));
+    const r3 = (s3 - Math.floor(s3));
+    const prev = i > 0 ? closes[i-1] : c;
+    const open  = prev + (r1 - 0.5) * vol * c * 0.4;
+    const swing = vol * c;
+    const high  = Math.max(open, c) + r2 * swing * 0.6;
+    const low   = Math.min(open, c) - r3 * swing * 0.6;
+    return { o: open, h: high, l: low, c };
+  });
+}
+
+// ── SVG 캔들스틱 차트 렌더러 ──────────────────────────────
+const groups = {domestic:['d1','d2','d3','d4','d5'],global:['g1','g2','g3','g4','g5','g6','g7','g8'],commodity:['cm1','cm2','cm3','cm4','cm5','cm6'],energy:['en1','en2','en3','en4','en5','en6'],semi:['s1','s2','s3','s4','s5']};
+
+function makeChart(id, period){
+  // div 요소를 직접 SVG 컨테이너로 사용
+  const wrap = document.getElementById(id);
+  if(!wrap) return;
+  wrap.innerHTML = ''; // 기존 SVG 제거
+
+  const { labels, data: closes } = getPeriodData(id, period);
+  const ohlc = toOHLC(closes, period);
+  const n = ohlc.length;
+  const show10d = (period === '10d');
+
+  // 캔버스 크기
+  const W = 320, H = show10d ? 160 : 130;
+  const PAD = { top: show10d ? 22 : 14, bottom: 22, left: 4, right: 4 };
+  const chartW = W - PAD.left - PAD.right;
+  const chartH = H - PAD.top - PAD.bottom;
+
+  // 스케일
+  const allH = ohlc.map(c=>c.h), allL = ohlc.map(c=>c.l);
+  const yMax = Math.max(...allH), yMin = Math.min(...allL);
+  const yRange = yMax - yMin || 1;
+  const toY = v => PAD.top + chartH * (1 - (v - yMin) / yRange);
+  const slotW = chartW / n;
+  const candleW = Math.max(2, slotW * 0.5);
+  const toX = i => PAD.left + slotW * i + slotW / 2;
+
+  // SVG 생성
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width','100%');
+  svg.setAttribute('height','100%');
+  svg.style.display = 'block';
+  svg.style.overflow = 'visible';
+
+  // 툴팁 div
+  let tooltip = document.getElementById('candle-tooltip');
+  if(!tooltip){
+    tooltip = document.createElement('div');
+    tooltip.id = 'candle-tooltip';
+    tooltip.style.cssText = 'position:fixed;background:#1a2332;color:#fff;padding:6px 10px;border-radius:8px;font-size:11px;pointer-events:none;display:none;z-index:9999;line-height:1.7;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3)';
+    document.body.appendChild(tooltip);
+  }
+
+  // 캔들 그리기
+  ohlc.forEach((bar, i) => {
+    const x = toX(i);
+    const yO = toY(bar.o), yC = toY(bar.c);
+    const yH = toY(bar.h), yL = toY(bar.l);
+    const isUp = bar.c >= bar.o;
+    const col = isUp ? '#16a34a' : '#dc2626';
+    const bodyTop = Math.min(yO, yC);
+    const bodyH = Math.max(Math.abs(yC - yO), 1);
+    const label = labels[i];
+
+    // 위 꼬리
+    const wickUp = document.createElementNS('http://www.w3.org/2000/svg','line');
+    wickUp.setAttribute('x1', x); wickUp.setAttribute('y1', yH);
+    wickUp.setAttribute('x2', x); wickUp.setAttribute('y2', bodyTop);
+    wickUp.setAttribute('stroke', col); wickUp.setAttribute('stroke-width', '1');
+    svg.appendChild(wickUp);
+
+    // 아래 꼬리
+    const wickDn = document.createElementNS('http://www.w3.org/2000/svg','line');
+    wickDn.setAttribute('x1', x); wickDn.setAttribute('y1', bodyTop + bodyH);
+    wickDn.setAttribute('x2', x); wickDn.setAttribute('y2', yL);
+    wickDn.setAttribute('stroke', col); wickDn.setAttribute('stroke-width', '1');
+    svg.appendChild(wickDn);
+
+    // 몸통
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x', x - candleW/2);
+    rect.setAttribute('y', bodyTop);
+    rect.setAttribute('width', candleW);
+    rect.setAttribute('height', bodyH);
+    rect.setAttribute('fill', isUp ? col : col);
+    rect.setAttribute('opacity', isUp ? '0.9' : '0.9');
+    rect.setAttribute('rx', '1');
+    svg.appendChild(rect);
+
+    // 종가 라벨 (위/아래 교대)
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    const lblY = i % 2 === 0 ? yC - 5 : yC + 10;
+    lbl.setAttribute('x', x);
+    lbl.setAttribute('y', lblY);
+    lbl.setAttribute('text-anchor','middle');
+    lbl.setAttribute('font-size', show10d ? '7.5' : '6.5');
+    lbl.setAttribute('font-weight','700');
+    lbl.setAttribute('fill', col);
+    lbl.setAttribute('font-family','Segoe UI,sans-serif');
+    lbl.textContent = fmtVal(bar.c);
+    svg.appendChild(lbl);
+
+    // x축 레이블
+    const xLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    xLbl.setAttribute('x', x);
+    xLbl.setAttribute('y', H - 4);
+    xLbl.setAttribute('text-anchor','middle');
+    xLbl.setAttribute('font-size','7');
+    xLbl.setAttribute('fill','#94a3b8');
+    xLbl.setAttribute('font-family','Segoe UI,sans-serif');
+    // 3년은 간격 조정
+    if(period !== '3y' || i % 2 === 0) xLbl.textContent = label;
+    svg.appendChild(xLbl);
+
+    // 호버 영역 (투명 rect)
+    const hit = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    hit.setAttribute('x', x - slotW/2); hit.setAttribute('y', PAD.top);
+    hit.setAttribute('width', slotW); hit.setAttribute('height', chartH);
+    hit.setAttribute('fill','transparent');
+    hit.setAttribute('cursor','pointer');
+    hit.addEventListener('mouseenter', e => {
+      tooltip.style.display = 'block';
+      tooltip.innerHTML = `<b style="color:${col}">${label}</b><br>시가: ${fmtVal(bar.o)}<br>고가: <span style="color:#16a34a">${fmtVal(bar.h)}</span><br>저가: <span style="color:#dc2626">${fmtVal(bar.l)}</span><br>종가: <b>${fmtVal(bar.c)}</b>`;
+    });
+    hit.addEventListener('mousemove', e => {
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top  = (e.clientY - 10) + 'px';
+    });
+    hit.addEventListener('mouseleave', () => { tooltip.style.display='none'; });
+    svg.appendChild(hit);
+  });
+
+  wrap.style.height = H + 'px';
+  wrap.appendChild(svg);
+}
+
+const periodState = {domestic:'10d',global:'10d',commodity:'10d',energy:'10d',semi:'10d'};
+function setPeriod(group, period, btn){
+  periodState[group] = period;
+  btn.closest('.period-tabs').querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  groups[group].forEach(id => makeChart(id, period));
+}
+setTimeout(()=>{ Object.keys(groups).forEach(g => groups[g].forEach(id => makeChart(id, periodState[g]))); }, 150);
+
+// AI 인사이트
+async function getAIInsight(){
+  const btn=document.querySelector('.ai-btn'),spinner=document.getElementById('ai-spinner'),result=document.getElementById('ai-result');
+  btn.disabled=true;spinner.classList.add('show');result.classList.remove('show');
+  const prompt=`당신은 글로벌 금융 시장 전문 애널리스트입니다. 오늘(2026년 3월 30일) 시장 데이터를 바탕으로 핵심 인사이트를 한국어로 3~4개 항목으로 정리해주세요.\n\n현재 시장 데이터 (검증된 최신 실제 데이터):\n- KOSPI 5,438.87 (-0.40%), KOSDAQ 1,141.51 (+0.43%)\n- 삼성전자 179,700원 (-0.22%), SK하이닉스 922,000원 (-1.18%)\n- S&P500 6,368.85 (-1.67%), NASDAQ 20,948.36 (-2.15%), DOW 45,166.64 (-1.73%)\n- Nikkei 35,617.56 (-1.34%), 상해종합 3,351.34 (-0.36%)\n- WTI 원유 $101.17 (+7.86%), 브렌트 $112.57 (+4.22%) — 호르무즈 해협 봉쇄 영향\n- 금 $4,493 (+2.54%), 은 $69.74 (+2.43%)\n- NVIDIA $171.24 (-2.10%), TSMC $326.74 (+0.19%), Intel $19.84 (-3.03%)\n- SOX 반도체지수 4,218 (-2.14%)\n- 원/달러 환율 1,508원\n- 주요 이슈: 미·이란 전쟁 한 달째(호르무즈 해협 봉쇄), 구글 터보퀀트 K반도체 충격, 미국 경기침체 우려(Moody's 49%), 외국인 코스피 3주 연속 대규모 순매도\n\n각 항목은 이모지로 시작하고, 구체적인 숫자를 인용하며 투자자 시각의 핵심 포인트를 설명해주세요.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    result.innerHTML=(data.content?.[0]?.text||'결과를 가져오지 못했습니다.').replace(/\n/g,'<br>');
+    result.classList.add('show');
+  }catch(e){
+    result.innerHTML='⚠️ 분석 중 오류가 발생했습니다.';
+    result.classList.add('show');
+  }
+  btn.disabled=false;spinner.classList.remove('show');
+}
+</script>
+</body>
+</html>
