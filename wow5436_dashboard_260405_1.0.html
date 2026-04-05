@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#1a2332;min-height:100vh}
+.top-bar{background:#fff;border-bottom:1px solid #e2e8f0;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-size:18px;font-weight:600;color:#2563eb}
+.search-bar{display:flex;align-items:center;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:24px;padding:8px 16px;width:340px;gap:8px;position:relative}
+.search-bar input{background:none;border:none;outline:none;font-size:14px;color:#1a2332;width:100%}
+.clock-area{text-align:right}
+#clock{font-size:22px;font-weight:600;letter-spacing:1px}
+#date-str{font-size:12px;color:#64748b;margin-top:2px}
+.main{padding:20px 24px;max-width:1400px;margin:0 auto}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px}
+.section-title{font-size:13px;font-weight:600;color:#64748b;letter-spacing:0.5px;text-transform:uppercase}
+.period-tabs{display:flex;gap:4px}
+.period-btn{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid #e2e8f0;background:#fff;color:#94a3b8;cursor:pointer;transition:all 0.15s}
+.period-btn.active{background:#2563eb;color:#fff;border-color:#2563eb}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.grid-5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.card{background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:16px}
+.weather-card{display:flex;align-items:center;gap:16px;padding:18px 20px}
+.weather-main{flex:1}
+.weather-meta{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:12px;color:#94a3b8}
+.index-card{padding:12px 14px;position:relative}
+.idx-label{font-size:11px;color:#94a3b8;font-weight:500;margin-bottom:3px}
+.idx-value{font-size:17px;font-weight:600;color:#1a2332}
+.idx-change{font-size:11px;margin-top:2px;font-weight:500}
+.up{color:#16a34a}.down{color:#dc2626}.flat{color:#94a3b8}
+.chart-wrap{position:relative;width:100%;height:90px;margin-top:6px}
+.news-card{padding:0;overflow:hidden}
+.news-tabs{display:flex;border-bottom:1px solid #e2e8f0}
+.news-tab{padding:10px 14px;font-size:13px;font-weight:500;color:#94a3b8;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;white-space:nowrap}
+.news-tab.active{color:#2563eb;border-bottom-color:#2563eb}
+.news-list{padding:10px 14px}
+.news-item{padding:9px 0;border-bottom:1px solid #f1f5f9}
+.news-item:last-child{border-bottom:none}
+.news-headline{font-size:13px;font-weight:500;color:#1a2332;line-height:1.5}
+.news-time{font-size:11px;color:#94a3b8;margin-top:2px}
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;margin-right:4px;vertical-align:middle}
+.tag-blue{background:#dbeafe;color:#1d4ed8}.tag-green{background:#dcfce7;color:#15803d}
+.tag-red{background:#fee2e2;color:#dc2626}.tag-amber{background:#fef3c7;color:#b45309}.tag-purple{background:#ede9fe;color:#7c3aed}.tag-teal{background:#ccfbf1;color:#0f766e}
+.row-flex{display:flex;gap:14px}
+.col-left{flex:1.1}.col-right{flex:0.9}
+.status-bar{display:flex;align-items:center;gap:10px;padding:8px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:14px;font-size:12px;flex-wrap:wrap}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-ok{background:#16a34a}.dot-err{background:#dc2626}.dot-loading{background:#f59e0b;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.refresh-btn{margin-left:auto;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0}
+.refresh-btn:disabled{opacity:0.6;cursor:not-allowed}
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay{position:absolute;inset:0;background:rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;border-radius:14px;font-size:11px;color:#94a3b8}
+.ai-btn{margin-top:20px;width:100%;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.ai-result{background:#f0f6ff;border:1px solid #bfdbfe;border-radius:12px;padding:16px;margin-top:12px;font-size:13px;line-height:1.8;color:#1e40af;display:none}
+.ai-result.show{display:block}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:none}
+.spinner.show{display:inline-block}
+@media(max-width:900px){.grid-4,.grid-5{grid-template-columns:repeat(2,1fr)}.row-flex{flex-direction:column}.grid-3{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="logo">MY DASHBOARD</div>
+  <div class="search-bar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input id="search-input" type="text" placeholder="검색어를 입력하세요..." onkeydown="if(event.key==='Enter')doSearch(this.value)">
+    <button onclick="doSearch(document.getElementById('search-input').value)" style="background:#2563eb;color:#fff;border:none;border-radius:16px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer">검색</button>
+    <div id="search-result" style="display:none;position:absolute;top:44px;left:0;right:0;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.10)">
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">링크를 클릭해서 여세요</div>
+      <div id="search-links" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+  </div>
+  <div class="clock-area">
+    <div id="clock">--:--:--</div>
+    <div id="date-str"></div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="status-dot dot-loading" id="dot-market"></div>
+    <span id="status-text">시세 로딩 중...</span>
+    <span id="last-updated" style="color:#94a3b8"></span>
+    <button class="refresh-btn" id="refresh-btn" onclick="fetchAll()">
+      <svg id="refresh-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      새로고침
+    </button>
+  </div>
+
+  <!-- 날씨 & 뉴스 -->
+  <div class="section-header"><div class="section-title">날씨 &amp; 뉴스</div></div>
+  <div class="row-flex">
+    <div class="col-left">
+      <div class="card weather-card">
+        <div style="font-size:52px;line-height:1">⛅</div>
+        <div class="weather-main">
+          <div style="font-size:13px;color:#94a3b8;margin-bottom:2px">서울, 대한민국</div>
+          <div style="font-size:36px;font-weight:600">18°C</div>
+          <div style="font-size:14px;color:#64748b;margin-top:2px">구름 조금 · 미세먼지 보통</div>
+          <div class="weather-meta">
+            <span>💧 습도 52%</span><span>🌬 남풍 3m/s</span><span>☀️ 자외선 3(보통)</span><span>🌅 일출 06:14</span>
+          </div>
+        </div>
+        <div style="text-align:center;min-width:180px">
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;font-weight:500">주간 예보</div>
+          <div style="display:flex;gap:8px;justify-content:center">
+            <div style="text-align:center"><div style="font-size:11px;color:#94a3b8">수</div><div style="font-size:18px">🌤</div><div style="font-size:12px;font-weight:600">16°</div></div>
+            <div style="text-align:center"><div style="font-size:11px;color:#94a3b8">목</div><div style="font-size:18px">🌧</div><div style="font-size:12px;font-weight:600">12°</div></div>
+            <div style="text-align:center"><div style="font-size:11px;color:#94a3b8">금</div><div style="font-size:18px">🌧</div><div style="font-size:12px;font-weight:600">11°</div></div>
+            <div style="text-align:center"><div style="font-size:11px;color:#94a3b8">토</div><div style="font-size:18px">🌦</div><div style="font-size:12px;font-weight:600">14°</div></div>
+            <div style="text-align:center"><div style="font-size:11px;color:#94a3b8">일</div><div style="font-size:18px">☁️</div><div style="font-size:12px;font-weight:600">15°</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-right">
+      <div class="card news-card">
+        <div class="news-tabs">
+          <div class="news-tab active" onclick="switchTab(this,'main')">주요</div>
+          <div class="news-tab" onclick="switchTab(this,'tech')">기술</div>
+          <div class="news-tab" onclick="switchTab(this,'economy')">경제</div>
+        </div>
+        <div class="news-list" id="news-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 국내 주식 -->
+  <div class="section-header"><div class="section-title">국내 주식</div></div>
+  <div class="grid-5" id="domestic-grid">
+    <div class="card index-card" id="card-KOSPI"><div class="idx-label">KOSPI</div><div class="idx-value" id="v-KOSPI">--</div><div class="idx-change" id="c-KOSPI">로딩중...</div><div class="chart-wrap"><canvas id="d1"></canvas></div></div>
+    <div class="card index-card" id="card-KOSDAQ"><div class="idx-label">KOSDAQ</div><div class="idx-value" id="v-KOSDAQ">--</div><div class="idx-change" id="c-KOSDAQ">로딩중...</div><div class="chart-wrap"><canvas id="d2"></canvas></div></div>
+    <div class="card index-card" id="card-005930KS"><div class="idx-label">삼성전자</div><div class="idx-value" id="v-005930KS">--</div><div class="idx-change" id="c-005930KS">로딩중...</div><div class="chart-wrap"><canvas id="d3"></canvas></div></div>
+    <div class="card index-card" id="card-000660KS"><div class="idx-label">SK하이닉스</div><div class="idx-value" id="v-000660KS">--</div><div class="idx-change" id="c-000660KS">로딩중...</div><div class="chart-wrap"><canvas id="d4"></canvas></div></div>
+    <div class="card index-card" id="card-035420KS"><div class="idx-label">NAVER</div><div class="idx-value" id="v-035420KS">--</div><div class="idx-change" id="c-035420KS">로딩중...</div><div class="chart-wrap"><canvas id="d5"></canvas></div></div>
+  </div>
+
+  <!-- 해외 주식 -->
+  <div class="section-header"><div class="section-title">해외 주식</div></div>
+  <div class="grid-4">
+    <div class="card index-card"><div class="idx-label">🇺🇸 S&P 500</div><div class="idx-value" id="v-SPY">--</div><div class="idx-change" id="c-SPY">로딩중...</div><div class="chart-wrap"><canvas id="g1"></canvas></div></div>
+    <div class="card index-card"><div class="idx-label">🇺🇸 NASDAQ</div><div class="idx-value" id="v-QQQ">--</div><div class="idx-change" id="c-QQQ">로딩중...</div><div class="chart-wrap"><canvas id="g2"></canvas></div></div>
+    <div class="card index-card"><div class="idx-label">🇺🇸 DOW</div><div class="idx-value" id="v-DIA">--</div><div class="idx-change" id="c-DIA">로딩중...</div><div class="chart-wrap"><canvas id="g3"></canvas></div></div>
+    <div class="card index-card"><div class="idx-label">🇯🇵 Nikkei</div><div class="idx-value" id="v-EWJ">--</div><div class="idx-change" id="c-EWJ">로딩중...</div><div class="chart-wrap"><canvas id="g4"></canvas></div></div>
+    <div class="card index-card"><div class="idx-label">🇩🇪 DAX</div><div class="idx-value" id="v-EWG">--</div><div class="idx-change" id="c-EWG">로딩중...</div><div class="chart-wrap"><canvas id="g5"></canvas></div></div>
+    <div class="card index-card"><div class="idx-label">🇨🇳 China</div><div class="idx-value" id="v-FXI">--</div><div class="idx-change" id="c-FXI">로딩중...</div><div class="chart-wrap"><canvas id="g6"></canvas></div></div>
+    <div class="card index-card"><div class="idx-label">MSCI EM</div><div class="idx-value" id="v-EEM">--</div><div class="idx-change" id="c-EEM">로딩중...</div><div class="chart-wrap"><canvas id="g7"></canvas></div></div>
+    <div class="card index-card"><div class="idx-label">🇰🇷 KOSPI ETF</div><div class="idx-value" id="v-EWY">--</div><div class="idx-change" id="c-EWY">로딩중...</div><div class="chart-wrap"><canvas id="g8"></canvas></div></div>
+  </div>
+
+  <!-- 원자재 & 에너지 -->
+  <div class="grid-2">
+    <div>
+      <div class="section-header"><div class="section-title">원자재</div></div>
+      <div class="grid-3">
+        <div class="card index-card"><div class="idx-label">금 (Gold)</div><div class="idx-value" id="v-GLD">--</div><div class="idx-change" id="c-GLD">로딩중...</div><div class="chart-wrap"><canvas id="cm1"></canvas></div></div>
+        <div class="card index-card"><div class="idx-label">은 (Silver)</div><div class="idx-value" id="v-SLV">--</div><div class="idx-change" id="c-SLV">로딩중...</div><div class="chart-wrap"><canvas id="cm2"></canvas></div></div>
+        <div class="card index-card"><div class="idx-label">구리 (Copper)</div><div class="idx-value" id="v-COPX">--</div><div class="idx-change" id="c-COPX">로딩중...</div><div class="chart-wrap"><canvas id="cm3"></canvas></div></div>
+        <div class="card index-card"><div class="idx-label">원달러 환율</div><div class="idx-value" id="v-USDKRW">--</div><div class="idx-change" id="c-USDKRW">로딩중...</div><div class="chart-wrap"><canvas id="cm4"></canvas></div></div>
+        <div class="card index-card"><div class="idx-label">달러인덱스</div><div class="idx-value" id="v-UUP">--</div><div class="idx-change" id="c-UUP">로딩중...</div><div class="chart-wrap"><canvas id="cm5"></canvas></div></div>
+        <div class="card index-card"><div class="idx-label">비트코인</div><div class="idx-value" id="v-BTC">--</div><div class="idx-change" id="c-BTC">로딩중...</div><div class="chart-wrap"><canvas id="cm6"></canvas></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-header"><div class="section-title">에너지</div></div>
+      <div class="grid-3">
+        <div class="card index-card"><div class="idx-label">WTI 원유</div><div class="idx-value" id="v-USO">--</div><div class="idx-change" id="c-USO">로딩중...</div><div class="chart-wrap"><canvas id="en1"></canvas></div></div>
+        <div class="card index-card"><div class="idx-label">천연가스</div><div class="idx-value" id="v-UNG">--</div><div class="idx-change" id="c-UNG">로딩중...</div><div class="chart-wrap"><canvas id="en2"></canvas></div></div>
+        <div class="card index-card"><div class="idx-label">에너지 ETF</div><div class="idx-value" id="v-XLE">--</div><div class="idx-change" id="c-XLE">로딩중...</div><div class="chart-wrap"><canvas id="en3"></canvas></div></div>
+        <div class="card index-card"><div class="idx-label">태양광 ETF</div><div class="idx-value" id="v-TAN">--</div><div class="idx-change" id="c-TAN">로딩중...</div><div class="chart-wrap"><canvas id="en4"></canvas></div></div>
+        <div class="card index-card"><div class="idx-label">핵에너지 ETF</div><div class="idx-value" id="v-URA">--</div><div class="idx-change" id="c-URA">로딩중...</div><div class="chart-wrap"><canvas id="en5"></canvas></div></div>
+        <div class="card index-card"><div class="idx-label">클린에너지</div><div class="idx-value" id="v-ICLN">--</div><div class="idx-change" id="c-ICLN">로딩중...</div><div class="chart-wrap"><canvas id="en6"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 반도체 -->
+  <div class="section-header"><div class="section-title">반도체 &amp; 기술 지수</div></div>
+  <div class="grid-5">
+    <div class="card index-card"><div class="idx-label">SOX (SOXX ETF)</div><div class="idx-value" id="v-SOXX">--</div><div class="idx-change" id="c-SOXX">로딩중...</div><div class="chart-wrap"><canvas id="s1"></canvas></div></div>
+    <div class="card index-card"><div class="idx-label">NVIDIA</div><div class="idx-value" id="v-NVDA">--</div><div class="idx-change" id="c-NVDA">로딩중...</div><div class="chart-wrap"><canvas id="s2"></canvas></div></div>
+    <div class="card index-card"><div class="idx-label">TSMC</div><div class="idx-value" id="v-TSM">--</div><div class="idx-change" id="c-TSM">로딩중...</div><div class="chart-wrap"><canvas id="s3"></canvas></div></div>
+    <div class="card index-card"><div class="idx-label">Intel</div><div class="idx-value" id="v-INTC">--</div><div class="idx-change" id="c-INTC">로딩중...</div><div class="chart-wrap"><canvas id="s4"></canvas></div></div>
+    <div class="card index-card"><div class="idx-label">AMD</div><div class="idx-value" id="v-AMD">--</div><div class="idx-change" id="c-AMD">로딩중...</div><div class="chart-wrap"><canvas id="s5"></canvas></div></div>
+  </div>
+
+  <button class="ai-btn" onclick="getAIInsight()">
+    <span id="ai-spinner" class="spinner"></span>
+    ✨ AI 시장 인사이트 분석
+  </button>
+  <div class="ai-result" id="ai-result"></div>
+  <div style="height:32px"></div>
+</div>
+
+<script>
+// ── 시계 ──────────────────────────────────────────
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clock').textContent=n.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  document.getElementById('date-str').textContent=n.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+}
+updateClock();setInterval(updateClock,1000);
+
+// ── 검색 ──────────────────────────────────────────
+function doSearch(q){
+  q=q.trim();if(!q)return;
+  const enc=encodeURIComponent(q);
+  document.getElementById('search-links').innerHTML=[
+    {name:'네이버',url:`https://search.naver.com/search.naver?query=${enc}`},
+    {name:'구글',url:`https://www.google.com/search?q=${enc}`},
+    {name:'다음',url:`https://search.daum.net/search?q=${enc}`}
+  ].map(l=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:#f1f5f9">
+    <span style="font-size:13px;font-weight:500">${l.name}에서 <b>${q}</b></span>
+    <a href="${l.url}" target="_blank" rel="noopener" style="background:#2563eb;color:#fff;text-decoration:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:600">열기</a>
+  </div>`).join('');
+  document.getElementById('search-result').style.display='block';
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.search-bar'))document.getElementById('search-result').style.display='none';});
+
+// ── 뉴스 ──────────────────────────────────────────
+const newsData={
+  main:[
+    {tag:'정치',tc:'tag-blue',headline:'이재명 대통령, 미·이란 전쟁 관련 긴급 안보회의 주재',time:'26.4.5. 09:00'},
+    {tag:'국제',tc:'tag-amber',headline:'트럼프 "이란 협상 막바지…2주 내 결론" 강경 발언 이어가',time:'26.4.5. 08:30'},
+    {tag:'경제',tc:'tag-red',headline:'유가 100달러 돌파 한달…가계·기업 에너지 부담 급증',time:'26.4.5. 08:00'},
+    {tag:'사회',tc:'tag-teal',headline:'서울 지하철 요금 4월부터 1,600원으로 인상 확정',time:'26.4.5. 07:45'},
+    {tag:'스포츠',tc:'tag-green',headline:'손흥민, 토트넘서 통산 200골 달성…역대 최다 외국인',time:'26.4.5. 07:00'},
+  ],
+  tech:[
+    {tag:'AI',tc:'tag-purple',headline:'구글 터보퀀트 충격 지속…메모리 수요 최대 6배 감소 전망',time:'26.4.5. 09:10'},
+    {tag:'반도체',tc:'tag-blue',headline:'삼성·하이닉스, 중동 전쟁발 공급망 불확실성 대응 비상',time:'26.4.5. 08:20'},
+    {tag:'AI',tc:'tag-purple',headline:'앤트로픽, Claude 4 시리즈 글로벌 확대 적용 발표',time:'26.4.5. 07:50'},
+    {tag:'모바일',tc:'tag-teal',headline:'삼성 갤럭시 S26 울트라, 200MP 카메라·온디바이스 AI 탑재',time:'26.4.5. 06:30'},
+    {tag:'규제',tc:'tag-red',headline:'EU AI법 본격 시행…고위험 AI 시스템 규제 강화',time:'26.4.5. 05:50'},
+  ],
+  economy:[
+    {tag:'환율',tc:'tag-amber',headline:'원·달러 1,510원대 등락…중동 리스크·외환보유액 감소 압박',time:'26.4.5. 09:35'},
+    {tag:'주식',tc:'tag-blue',headline:'코스피, 호르무즈 안전항행 기대에 반등 시도…5,400선 도전',time:'26.4.5. 09:20'},
+    {tag:'에너지',tc:'tag-red',headline:'국제유가 100달러 돌파 유지…스태그플레이션 경계감 고조',time:'26.4.4. 18:00'},
+    {tag:'수출',tc:'tag-green',headline:'1분기 수출 1,721억달러…반도체·자동차 주도 6% 증가',time:'26.4.5. 08:00'},
+    {tag:'금리',tc:'tag-teal',headline:'한은, 5월 금통위서 기준금리 동결 유력…전쟁 변수 주시',time:'26.4.5. 07:40'},
+  ]
+};
+function renderNews(tab){
+  document.getElementById('news-container').innerHTML=newsData[tab].map(n=>`
+    <div class="news-item"><div class="news-headline"><span class="tag ${n.tc}">${n.tag}</span>${n.headline}</div><div class="news-time">${n.time}</div></div>`).join('');
+}
+function switchTab(el,tab){
+  document.querySelectorAll('.news-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');renderNews(tab);
+}
+renderNews('main');
+
+// ── 차트 ──────────────────────────────────────────
+const chartRegistry={};
+const canvasMap={
+  'KOSPI':'d1','KOSDAQ':'d2','005930KS':'d3','000660KS':'d4','035420KS':'d5',
+  'SPY':'g1','QQQ':'g2','DIA':'g3','EWJ':'g4','EWG':'g5','FXI':'g6','EEM':'g7','EWY':'g8',
+  'GLD':'cm1','SLV':'cm2','COPX':'cm3','USDKRW':'cm4','UUP':'cm5','BTC':'cm6',
+  'USO':'en1','UNG':'en2','XLE':'en3','TAN':'en4','URA':'en5','ICLN':'en6',
+  'SOXX':'s1','NVDA':'s2','TSM':'s3','INTC':'s4','AMD':'s5'
+};
+// 마지막 성공값 저장
+const lastValues={};
+
+function makeSparkline(id,prices,isUp){
+  const ctx=document.getElementById(id);if(!ctx)return;
+  const col=isUp?'#16a34a':'#dc2626';
+  if(chartRegistry[id])chartRegistry[id].destroy();
+  chartRegistry[id]=new Chart(ctx,{
+    type:'line',
+    data:{labels:prices.map((_,i)=>i),datasets:[{data:prices,borderColor:col,borderWidth:1.5,pointRadius:0,fill:true,backgroundColor:isUp?'rgba(22,163,74,0.07)':'rgba(220,38,38,0.07)',tension:0.3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{display:false}},scales:{x:{display:false},y:{display:false,grace:'15%'}},layout:{padding:{top:8,bottom:2}}}
+  });
+}
+
+// ── 데이터 표시 ────────────────────────────────────
+function fmt(v,sym){
+  if(sym==='USDKRW') return Math.round(v).toLocaleString('ko-KR')+'원';
+  if(['005930KS','000660KS','035420KS'].includes(sym)) return Math.round(v).toLocaleString('ko-KR');
+  if(v>=1000) return v.toLocaleString('en-US',{maximumFractionDigits:2});
+  if(v>=100) return v.toFixed(2);
+  return v.toFixed(2);
+}
+
+function updateCard(sym, price, change, pct, history){
+  const vEl=document.getElementById('v-'+sym);
+  const cEl=document.getElementById('c-'+sym);
+  if(!vEl||!cEl) return;
+  const isUp=change>=0;
+  vEl.textContent=fmt(price,sym);
+  const sign=isUp?'▲':'▼';
+  const cls=isUp?'up':'down';
+  cEl.className='idx-change '+cls;
+  const chgStr=Math.abs(change)>=1?Math.abs(change).toFixed(2):Math.abs(change).toFixed(3);
+  cEl.textContent=`${sign} ${chgStr} (${isUp?'+':''}${pct.toFixed(2)}%)`;
+  if(history&&history.length>1) makeSparkline(canvasMap[sym], history, isUp);
+  lastValues[sym]={price,change,pct,history};
+}
+
+function setCardError(sym, useLastValue){
+  if(useLastValue && lastValues[sym]){
+    const lv=lastValues[sym];
+    updateCard(sym, lv.price, lv.change, lv.pct, lv.history);
+    return;
+  }
+  const vEl=document.getElementById('v-'+sym);
+  const cEl=document.getElementById('c-'+sym);
+  if(vEl) vEl.textContent='--';
+  if(cEl){cEl.className='idx-change flat';cEl.textContent='조회 실패';}
+}
+
+// ── Yahoo Finance 프록시 호출 ──────────────────────
+const PROXY='https://api.allorigins.win/raw?url=';
+const YF='https://query1.finance.yahoo.com/v8/finance/chart/';
+
+async function fetchYF(sym, yfSym){
+  const url=`${YF}${encodeURIComponent(yfSym)}?interval=1d&range=1mo`;
+  const res=await fetch(PROXY+encodeURIComponent(url),{signal:AbortSignal.timeout(10000)});
+  const json=await res.json();
+  const meta=json.chart.result[0].meta;
+  const closes=json.chart.result[0].indicators.quote[0].close.filter(Boolean);
+  const price=meta.regularMarketPrice||closes[closes.length-1];
+  const prev=meta.chartPreviousClose||closes[closes.length-2];
+  const change=price-prev;
+  const pct=(change/prev)*100;
+  updateCard(sym, price, change, pct, closes.slice(-30));
+}
+
+// ── 환율 (exchangerate-api) ───────────────────────
+async function fetchUSDKRW(){
+  const res=await fetch('https://open.er-api.com/v6/latest/USD',{signal:AbortSignal.timeout(8000)});
+  const json=await res.json();
+  const rate=json.rates.KRW;
+  // 전일 대비 변화는 API 미제공이므로 0으로 표시
+  updateCard('USDKRW', rate, 0, 0, null);
+  // 간단한 sparkline 대신 고정값 사용
+  const el=document.getElementById('c-USDKRW');
+  if(el){el.className='idx-change flat';el.textContent='실시간 환율';}
+}
+
+// ── 비트코인 (CoinGecko) ─────────────────────────
+async function fetchBTC(){
+  const res=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',{signal:AbortSignal.timeout(8000)});
+  const json=await res.json();
+  const price=json.bitcoin.usd;
+  const pct=json.bitcoin.usd_24h_change;
+  const change=price*(pct/100);
+  updateCard('BTC', price, change, pct, null);
+}
+
+// ── 심볼 목록 ─────────────────────────────────────
+// 한국 주식: Yahoo Finance KRX 심볼
+const KR_SYMS=[
+  ['KOSPI','^KS11'],['KOSDAQ','^KQ11'],
+  ['005930KS','005930.KS'],['000660KS','000660.KS'],['035420KS','035420.KS']
+];
+const US_SYMS=[
+  ['SPY','SPY'],['QQQ','QQQ'],['DIA','DIA'],['EWJ','EWJ'],['EWG','EWG'],
+  ['FXI','FXI'],['EEM','EEM'],['EWY','EWY'],
+  ['GLD','GLD'],['SLV','SLV'],['COPX','COPX'],['UUP','UUP'],
+  ['USO','USO'],['UNG','UNG'],['XLE','XLE'],['TAN','TAN'],['URA','URA'],['ICLN','ICLN'],
+  ['SOXX','SOXX'],['NVDA','NVDA'],['TSM','TSM'],['INTC','INTC'],['AMD','AMD']
+];
+
+// ── 전체 fetch ─────────────────────────────────────
+let fetching=false;
+async function fetchAll(){
+  if(fetching)return;
+  fetching=true;
+  const btn=document.getElementById('refresh-btn');
+  const icon=document.getElementById('refresh-icon');
+  const dot=document.getElementById('dot-market');
+  const st=document.getElementById('status-text');
+  btn.disabled=true;
+  icon.classList.add('spin');
+  dot.className='status-dot dot-loading';
+  st.textContent='시세 업데이트 중...';
+
+  let ok=0, fail=0;
+
+  // 한국 주식
+  for(const [sym,yfSym] of KR_SYMS){
+    try{ await fetchYF(sym,yfSym); ok++; }
+    catch(e){ setCardError(sym, !!lastValues[sym]); fail++; }
+  }
+
+  // 미국 ETF / 주식 (병렬)
+  const usResults=await Promise.allSettled(US_SYMS.map(([sym,yfSym])=>fetchYF(sym,yfSym)));
+  usResults.forEach((r,i)=>{
+    if(r.status==='fulfilled') ok++;
+    else { setCardError(US_SYMS[i][0], !!lastValues[US_SYMS[i][0]]); fail++; }
+  });
+
+  // 환율
+  try{ await fetchUSDKRW(); ok++; }catch(e){ setCardError('USDKRW', !!lastValues['USDKRW']); fail++; }
+
+  // 비트코인
+  try{ await fetchBTC(); ok++; }catch(e){ setCardError('BTC', !!lastValues['BTC']); fail++; }
+
+  const now=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  if(fail===0){
+    dot.className='status-dot dot-ok';
+    st.textContent=`✅ 모든 데이터 로드 완료 (${ok}개)`;
+  } else {
+    dot.className='status-dot dot-err';
+    st.textContent=`⚠️ ${ok}개 성공 / ${fail}개 실패 (마지막 성공값 유지)`;
+  }
+  document.getElementById('last-updated').textContent=`마지막 업데이트: ${now}`;
+  btn.disabled=false;
+  icon.classList.remove('spin');
+  fetching=false;
+}
+
+// ── AI 인사이트 ────────────────────────────────────
+async function getAIInsight(){
+  const btn=document.querySelector('.ai-btn');
+  const spinner=document.getElementById('ai-spinner');
+  const result=document.getElementById('ai-result');
+  btn.disabled=true;spinner.classList.add('show');result.classList.remove('show');
+
+  // 현재 화면의 주요 지표 수집
+  const vals={};
+  ['KOSPI','KOSDAQ','NVDA','TSM','SPY','QQQ','USO','GLD','USDKRW'].forEach(k=>{
+    const el=document.getElementById('v-'+k);
+    if(el) vals[k]=el.textContent;
+  });
+
+  const prompt=`당신은 글로벌 금융 시장 전문 애널리스트입니다. 오늘(2026년 4월 5일) 시장 현황을 바탕으로 핵심 투자 인사이트를 한국어로 4개 항목으로 정리해주세요.
+
+현재 주요 지표:
+KOSPI: ${vals['KOSPI']}, KOSDAQ: ${vals['KOSDAQ']}
+S&P500 ETF(SPY): ${vals['SPY']}, NASDAQ ETF(QQQ): ${vals['QQQ']}
+NVIDIA: ${vals['NVDA']}, TSMC: ${vals['TSM']}
+WTI 원유 ETF(USO): ${vals['USO']}, 금(GLD): ${vals['GLD']}
+원/달러: ${vals['USDKRW']}
+
+핵심 이슈: 미·이란 전쟁 (호르무즈 해협 리스크), 구글 터보퀀트 메모리 충격, 유가 100달러 돌파
+
+각 항목은 이모지로 시작하고 투자자 관점의 구체적 포인트를 담아주세요.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    result.innerHTML=(data.content?.[0]?.text||'결과를 가져오지 못했습니다.').replace(/\n/g,'<br>');
+    result.classList.add('show');
+  }catch(e){
+    result.innerHTML='⚠️ 분석 중 오류가 발생했습니다.';
+    result.classList.add('show');
+  }
+  btn.disabled=false;spinner.classList.remove('show');
+}
+
+// ── 시작 ──────────────────────────────────────────
+window.addEventListener('load', ()=>{
+  setTimeout(fetchAll, 300);
+  // 5분마다 자동 갱신
+  setInterval(fetchAll, 5*60*1000);
+});
+</script>
+</body>
+</html>
